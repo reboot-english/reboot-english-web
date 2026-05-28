@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  --font-cn: 'Noto Serif SC', 'Cormorant Garamond', Georgia, serif;
+
+  --color-paper: #f4efe4;
+  --color-paper-deep: #ece5d6;
+  --color-ink: #3a352c;
+  --color-ink-soft: #6b6453;
+  --color-ink-faint: #a59c87;
+  --color-accent: #9a7b4f;
+}
+
+html {
+  background-color: var(--color-paper);
+}
+
+body {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #e0d6bf;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
