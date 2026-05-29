@@ -90,8 +90,8 @@ export function listAudio(): Promise<string[]> {
   return getWordList('/api/word/listAudio')
 }
 
-export async function deleteAudio(word: string): Promise<void> {
-  const res = await fetch('/api/word/deleteAudio', {
+async function postDelete(path: string, word: string): Promise<void> {
+  const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ word }),
@@ -103,6 +103,14 @@ export async function deleteAudio(word: string): Promise<void> {
   if (json.code !== 200) {
     throw new Error(json.message || '删除失败')
   }
+}
+
+export function deleteAudio(word: string): Promise<void> {
+  return postDelete('/api/word/deleteAudio', word)
+}
+
+export function deleteWord(word: string): Promise<void> {
+  return postDelete('/api/word/delete', word)
 }
 
 export async function isFavorite(word: string): Promise<boolean> {

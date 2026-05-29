@@ -107,7 +107,7 @@ export default function App() {
         {status === 'done' && data && (
           <div className="mt-14">
             {isFound(data) ? (
-              <WordResult data={data} />
+              <WordResult data={data} onUpdated={setData} />
             ) : (
               <NotFound word={data.word} />
             )}

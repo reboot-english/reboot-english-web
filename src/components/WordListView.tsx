@@ -122,7 +122,7 @@ export default function WordListView({ title, fetchWords, emptyText }: Props) {
             {detailStatus === 'done' && detail && (
               <div key={detail.word}>
                 {isFound(detail) ? (
-                  <WordResult data={detail} />
+                  <WordResult data={detail} onUpdated={setDetail} />
                 ) : (
                   <p className="mt-10 font-cn text-ink-soft">没有找到「{detail.word}」的释义。</p>
                 )}
