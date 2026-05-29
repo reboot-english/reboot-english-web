@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import SearchBar from './components/SearchBar'
 import WordResult from './components/WordResult'
 import { isFound, lookupWord, type WordData } from './api'
@@ -34,7 +35,18 @@ export default function App() {
   const hasResult = status === 'done' || status === 'error'
 
   return (
-    <div className="min-h-screen px-6 py-10 sm:px-10">
+    <div className="relative min-h-screen px-6 py-10 sm:px-10">
+      {/* favorites entry, top-right */}
+      <Link
+        to="/favorites"
+        className="absolute right-6 top-6 flex items-center gap-1.5 font-cn text-sm text-ink-soft transition-colors hover:text-accent sm:right-10"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="m12 3 2.7 5.46 6.03.88-4.36 4.25 1.03 6L12 16.9 6.6 19.6l1.03-6L3.27 9.34l6.03-.88L12 3Z" />
+        </svg>
+        收藏夹
+      </Link>
+
       <div className="mx-auto w-full max-w-2xl">
         {/* tagline */}
         <p
