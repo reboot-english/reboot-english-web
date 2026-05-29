@@ -66,8 +66,8 @@ export function unfavoriteWord(word: string): Promise<void> {
   return postWord('/api/word/unfavorite', word)
 }
 
-export async function listFavorite(): Promise<string[]> {
-  const res = await fetch('/api/word/listFavorite')
+async function getWordList(path: string): Promise<string[]> {
+  const res = await fetch(path)
   if (!res.ok) {
     throw new Error(`查询失败 (${res.status})`)
   }
@@ -76,6 +76,14 @@ export async function listFavorite(): Promise<string[]> {
     throw new Error(json.message || '查询失败')
   }
   return json.data ?? []
+}
+
+export function listFavorite(): Promise<string[]> {
+  return getWordList('/api/word/listFavorite')
+}
+
+export function listAllWords(): Promise<string[]> {
+  return getWordList('/api/word/list')
 }
 
 export async function isFavorite(word: string): Promise<boolean> {
