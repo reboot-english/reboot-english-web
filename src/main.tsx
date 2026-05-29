@@ -6,6 +6,7 @@ import App from './App.tsx'
 import FavoritesPage from './components/FavoritesPage.tsx'
 import DictionaryPage from './components/DictionaryPage.tsx'
 import PronunciationPage from './components/PronunciationPage.tsx'
+import AliasPage from './components/AliasPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/favorites" element={<FavoritesPage />} />
         <Route path="/words" element={<DictionaryPage />} />
         <Route path="/audio" element={<PronunciationPage />} />
+        <Route path="/alias" element={<AliasPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

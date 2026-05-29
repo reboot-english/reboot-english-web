@@ -113,6 +113,38 @@ export function deleteWord(word: string): Promise<void> {
   return postDelete('/api/word/delete', word)
 }
 
+export interface Alias {
+  raw: string
+  word: string
+}
+
+export async function listAlias(): Promise<Alias[]> {
+  const res = await fetch('/api/word/listAlias')
+  if (!res.ok) {
+    throw new Error(`查询失败 (${res.status})`)
+  }
+  const json: FavoriteEnvelope<Alias[]> = await res.json()
+  if (json.code !== 200) {
+    throw new Error(json.message || '查询失败')
+  }
+  return json.data ?? []
+}
+
+export async function deleteAlias(raw: string): Promise<void> {
+  const res = await fetch('/api/word/deleteAlias', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw }),
+  })
+  if (!res.ok) {
+    throw new Error(`删除失败 (${res.status})`)
+  }
+  const json: FavoriteEnvelope<unknown> = await res.json()
+  if (json.code !== 200) {
+    throw new Error(json.message || '删除失败')
+  }
+}
+
 export async function isFavorite(word: string): Promise<boolean> {
   const res = await fetch(`/api/word/isFavorite?word=${encodeURIComponent(word)}`)
   if (!res.ok) {
