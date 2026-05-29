@@ -35,7 +35,7 @@ export default function SearchBar({ initial = '', onSearch, loading, autoFocus }
         autoCorrect="off"
         autoCapitalize="off"
         spellCheck={false}
-        className="min-w-0 flex-1 bg-transparent font-cn text-3xl tracking-wide text-ink placeholder:text-ink-faint focus:outline-none sm:text-4xl"
+        className="min-w-0 flex-1 bg-transparent py-1 font-cn text-3xl !leading-normal tracking-wide text-ink placeholder:text-ink-faint focus:outline-none sm:text-4xl"
       />
       <button
         type="submit"
