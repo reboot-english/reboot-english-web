@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listAudio } from '../api'
+import { deleteAudio, listAudio } from '../api'
 import { playAudio } from '../audio'
 
 // 音标片段形如 /pə/，整词则没有斜杠包裹。两者都可发音，只是排版略有区别。
@@ -12,6 +12,8 @@ export default function PronunciationPage() {
   const [items, setItems] = useState<string[]>([])
   const [status, setStatus] = useState<'loading' | 'done' | 'error'>('loading')
   const [playing, setPlaying] = useState<string | null>(null)
+  // 正在进行删除/更新操作的条目，禁用其按钮，避免重复点击。
+  const [busy, setBusy] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -35,6 +37,34 @@ export default function PronunciationPage() {
       await playAudio(text)
     } finally {
       setPlaying((cur) => (cur === text ? null : cur))
+    }
+  }
+
+  // 删除：调删除接口，成功后把该条目从列表移除。
+  async function remove(text: string) {
+    if (busy) return
+    setBusy(text)
+    try {
+      await deleteAudio(text)
+      setItems((list) => list.filter((t) => t !== text))
+    } catch {
+      // 删除失败则保留条目，不改动列表。
+    } finally {
+      setBusy((cur) => (cur === text ? null : cur))
+    }
+  }
+
+  // 更新：先删旧音频，再请求获取音频（重新生成并播放），条目仍保留在列表中。
+  async function refresh(text: string) {
+    if (busy) return
+    setBusy(text)
+    try {
+      await deleteAudio(text)
+      await play(text)
+    } catch {
+      // 忽略错误
+    } finally {
+      setBusy((cur) => (cur === text ? null : cur))
     }
   }
 
@@ -68,18 +98,18 @@ export default function PronunciationPage() {
               {items.map((text) => {
                 const phonetic = isPhonetic(text)
                 const active = playing === text
+                const isBusy = busy === text
                 return (
                   <li key={text}>
-                    <button
-                      onClick={() => play(text)}
-                      className={`group flex w-full items-center justify-between gap-2 rounded-lg border px-4 py-3 text-left transition-colors ${
+                    <div
+                      className={`flex items-center gap-2 rounded-lg border px-4 py-3 transition-colors ${
                         active
                           ? 'border-accent bg-paper-deep'
                           : 'border-ink/10 hover:border-accent/50 hover:bg-paper-deep/60'
                       }`}
                     >
                       <span
-                        className={`min-w-0 truncate ${
+                        className={`min-w-0 flex-1 truncate ${
                           phonetic
                             ? 'font-cn text-base text-ink-soft'
                             : 'font-serif text-xl text-ink'
@@ -87,17 +117,50 @@ export default function PronunciationPage() {
                       >
                         {text}
                       </span>
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={`h-4 w-4 shrink-0 transition-colors ${
-                          active ? 'text-accent' : 'text-ink-faint group-hover:text-accent'
+
+                      {/* play */}
+                      <button
+                        onClick={() => play(text)}
+                        disabled={isBusy}
+                        aria-label="播放"
+                        className={`shrink-0 rounded-full p-1.5 transition-colors hover:bg-ink/5 disabled:opacity-40 ${
+                          active ? 'text-accent' : 'text-ink-faint hover:text-accent'
                         }`}
-                        fill="currentColor"
-                        aria-hidden
                       >
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z" />
-                      </svg>
-                    </button>
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+                          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z" />
+                        </svg>
+                      </button>
+
+                      {/* refresh: delete then re-fetch & play */}
+                      <button
+                        onClick={() => refresh(text)}
+                        disabled={isBusy}
+                        aria-label="更新发音"
+                        title="删除旧音频并重新生成播放"
+                        className="shrink-0 rounded-full p-1.5 text-ink-faint transition-colors hover:bg-ink/5 hover:text-accent disabled:opacity-40"
+                      >
+                        <svg viewBox="0 0 24 24" className={`h-4 w-4 ${isBusy ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                          <path d="M21 3v6h-6" />
+                        </svg>
+                      </button>
+
+                      {/* delete */}
+                      <button
+                        onClick={() => remove(text)}
+                        disabled={isBusy}
+                        aria-label="删除发音"
+                        className="shrink-0 rounded-full p-1.5 text-ink-faint transition-colors hover:bg-ink/5 hover:text-red-700 disabled:opacity-40"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    </div>
                   </li>
                 )
               })}

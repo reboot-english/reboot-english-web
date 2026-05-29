@@ -90,6 +90,21 @@ export function listAudio(): Promise<string[]> {
   return getWordList('/api/word/listAudio')
 }
 
+export async function deleteAudio(word: string): Promise<void> {
+  const res = await fetch('/api/word/deleteAudio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word }),
+  })
+  if (!res.ok) {
+    throw new Error(`删除失败 (${res.status})`)
+  }
+  const json: FavoriteEnvelope<unknown> = await res.json()
+  if (json.code !== 200) {
+    throw new Error(json.message || '删除失败')
+  }
+}
+
 export async function isFavorite(word: string): Promise<boolean> {
   const res = await fetch(`/api/word/isFavorite?word=${encodeURIComponent(word)}`)
   if (!res.ok) {
