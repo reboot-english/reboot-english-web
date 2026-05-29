@@ -55,7 +55,7 @@ export default function WordResult({ data }: Props) {
         </h1>
         <div className="mt-2 flex shrink-0 items-center gap-3">
           <button
-            onClick={() => playAudio(data.word)}
+            onClick={() => playAudio(data.phonetic)}
             aria-label="朗读单词"
             className="rounded-full border border-ink/15 p-3 text-ink-soft transition-colors hover:border-accent hover:text-accent"
           >
