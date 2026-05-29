@@ -86,6 +86,10 @@ export function listAllWords(): Promise<string[]> {
   return getWordList('/api/word/list')
 }
 
+export function listAudio(): Promise<string[]> {
+  return getWordList('/api/word/listAudio')
+}
+
 export async function isFavorite(word: string): Promise<boolean> {
   const res = await fetch(`/api/word/isFavorite?word=${encodeURIComponent(word)}`)
   if (!res.ok) {

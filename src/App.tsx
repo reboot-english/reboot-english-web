@@ -49,6 +49,15 @@ export default function App() {
           单词库
         </Link>
         <Link
+          to="/audio"
+          className="flex items-center gap-1.5 transition-colors hover:text-accent"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z" />
+          </svg>
+          发音库
+        </Link>
+        <Link
           to="/favorites"
           className="flex items-center gap-1.5 transition-colors hover:text-accent"
         >
