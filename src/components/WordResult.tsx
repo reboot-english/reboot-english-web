@@ -16,6 +16,7 @@ export default function WordResult({ data, onUpdated }: Props) {
   const [favLoading, setFavLoading] = useState(false)
   const [updating, setUpdating] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
 
   useEffect(() => {
     let active = true
@@ -51,6 +52,17 @@ export default function WordResult({ data, onUpdated }: Props) {
       await navigator.clipboard.writeText(data.word)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // 复制失败，保持原状态
+    }
+  }
+
+  // 复制单个音标片段到剪贴板
+  async function copyPhonetic(idx: number, ph: string) {
+    try {
+      await navigator.clipboard.writeText(ph)
+      setCopiedIdx(idx)
+      setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1500)
     } catch {
       // 复制失败，保持原状态
     }
@@ -146,22 +158,40 @@ export default function WordResult({ data, onUpdated }: Props) {
           {syllables.map((s, i) => {
             const ph = data.phonetics[i]
             return (
-              <button
+              <div
                 key={i}
-                onClick={() => ph && playAudio(ph)}
-                disabled={!ph}
-                aria-label={ph ? `朗读 ${ph}` : s}
-                className="group rounded-md bg-paper-deep/70 px-4 py-2 text-center transition-colors hover:bg-paper-deep disabled:cursor-default"
+                className="group relative rounded-md bg-paper-deep/70 transition-colors hover:bg-paper-deep"
               >
-                <div className="font-serif text-xl text-ink transition-colors group-hover:text-accent">
-                  {s}
-                </div>
-                {ph && (
-                  <div className="mt-0.5 font-cn text-sm text-ink-faint transition-colors group-hover:text-accent">
-                    {ph}
+                <button
+                  onClick={() => ph && playAudio(ph)}
+                  disabled={!ph}
+                  aria-label={ph ? `朗读 ${ph}` : s}
+                  className="block w-full px-5 pb-2 pt-5 text-center disabled:cursor-default"
+                >
+                  <div className="font-serif text-xl text-ink transition-colors group-hover:text-accent">
+                    {s}
                   </div>
+                  {ph && (
+                    <div className="mt-0.5 font-cn text-sm text-ink-faint transition-colors group-hover:text-accent">
+                      {ph}
+                    </div>
+                  )}
+                </button>
+                {ph && (
+                  <button
+                    onClick={() => copyPhonetic(i, ph)}
+                    aria-label={`复制音标 ${ph}`}
+                    title={copiedIdx === i ? '已复制' : '复制音标'}
+                    className={`absolute right-1.5 top-1.5 rounded-full p-1 transition-opacity ${
+                      copiedIdx === i
+                        ? 'text-accent opacity-100'
+                        : 'text-ink-faint opacity-0 hover:text-accent group-hover:opacity-100'
+                    }`}
+                  >
+                    {copiedIdx === i ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+                  </button>
                 )}
-              </button>
+              </div>
             )
           })}
         </div>
@@ -223,18 +253,18 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
   )
 }
 
-function CopyIcon() {
+function CopyIcon({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <rect x="9" y="9" width="13" height="13" rx="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
   )
 }
 
-function CheckIcon() {
+function CheckIcon({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20 6 9 17l-5-5" />
     </svg>
   )
