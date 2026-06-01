@@ -9,6 +9,12 @@ interface Props {
   onUpdated?: (fresh: WordData) => void
 }
 
+/** 拆分建议的一组：单词块 text + 音标块 iphonetic */
+interface SplitPair {
+  text: string
+  iphonetic: string
+}
+
 export default function WordResult({ data, onUpdated }: Props) {
   const syllables = data.words.length > 0 ? data.words : [data.word]
 
@@ -18,7 +24,8 @@ export default function WordResult({ data, onUpdated }: Props) {
   const [copied, setCopied] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
   const [hintOpen, setHintOpen] = useState(false)
-  const [splitHint, setSplitHint] = useState('')
+  // 拆分建议：多组「单词块 text + 音标块 iphonetic」
+  const [pairs, setPairs] = useState<SplitPair[]>([{ text: '', iphonetic: '' }])
 
   useEffect(() => {
     let active = true
@@ -70,16 +77,33 @@ export default function WordResult({ data, onUpdated }: Props) {
     }
   }
 
-  // 打开更新弹窗，重置上次输入的建议
+  // 打开更新弹窗，用当前已拆分的单词块/音标块预填
   function openHint() {
-    setSplitHint('')
+    const preset = syllables.map((s, i) => ({ text: s, iphonetic: data.phonetics[i] ?? '' }))
+    setPairs(preset.length > 0 ? preset : [{ text: '', iphonetic: '' }])
     setHintOpen(true)
   }
 
-  // 提交更新：携带拆分建议 splitHint（可为空字符串）
+  function updatePair(idx: number, key: keyof SplitPair, val: string) {
+    setPairs((prev) => prev.map((p, i) => (i === idx ? { ...p, [key]: val } : p)))
+  }
+
+  function addPair() {
+    setPairs((prev) => [...prev, { text: '', iphonetic: '' }])
+  }
+
+  function removePair(idx: number) {
+    setPairs((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev))
+  }
+
+  // 提交更新：把非空键值对拼成 JSON 数组字符串作为 splitHint（全空则传空字符串）
   async function submitHint() {
     setHintOpen(false)
-    await update(splitHint.trim())
+    const filled = pairs
+      .map((p) => ({ text: p.text.trim(), iphonetic: p.iphonetic.trim() }))
+      .filter((p) => p.text !== '' || p.iphonetic !== '')
+    const hint = filled.length > 0 ? JSON.stringify(filled) : ''
+    await update(hint)
   }
 
   // 更新：1) 删单词查词缓存 2) 删音频（整词 + 整词音标 + 各音节音标块）3) 携带建议重新查询刷新
@@ -249,17 +273,62 @@ export default function WordResult({ data, onUpdated }: Props) {
           >
             <h2 className="font-serif text-2xl font-medium text-ink">更新「{data.word}」</h2>
             <p className="mt-2 font-cn text-sm text-ink-soft">
-              可填写拆分/修改建议，留空则按默认方式重新生成。
+              可填写拆分建议（单词块 + 音标块），留空则按默认方式重新生成。
             </p>
-            <textarea
-              value={splitHint}
-              onChange={(e) => setSplitHint(e.target.value)}
-              onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submitHint()}
-              autoFocus
-              rows={3}
-              placeholder="例如：拆成 al·go·rithm"
-              className="mt-4 w-full resize-y rounded-md border border-ink/15 bg-paper-deep/40 px-4 py-2.5 font-cn text-base leading-relaxed text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
-            />
+
+            <div className="mt-4 space-y-2">
+              {/* 表头 */}
+              <div className="flex gap-2 px-1 font-cn text-xs text-ink-faint">
+                <span className="flex-1">单词块</span>
+                <span className="flex-1">音标块</span>
+                <span className="w-7" />
+              </div>
+              {pairs.map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    value={p.text}
+                    onChange={(e) => updatePair(i, 'text', e.target.value)}
+                    autoFocus={i === 0}
+                    placeholder="mu"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    className="min-w-0 flex-1 rounded-md border border-ink/15 bg-paper-deep/40 px-3 py-2 font-cn text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                  />
+                  <input
+                    value={p.iphonetic}
+                    onChange={(e) => updatePair(i, 'iphonetic', e.target.value)}
+                    placeholder="/ˈmʌ/"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    className="min-w-0 flex-1 rounded-md border border-ink/15 bg-paper-deep/40 px-3 py-2 font-cn text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removePair(i)}
+                    disabled={pairs.length === 1}
+                    aria-label="删除该行"
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-ink-faint transition-colors hover:text-accent disabled:opacity-30 disabled:hover:text-ink-faint"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={addPair}
+              className="mt-3 flex items-center gap-1.5 font-cn text-sm text-ink-soft transition-colors hover:text-accent"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              添加一行
+            </button>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setHintOpen(false)}
