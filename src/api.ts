@@ -25,8 +25,10 @@ export function isFound(data: WordData): boolean {
   return data.poss.length > 0 && data.phonetic !== NOT_RECOGNIZED
 }
 
-export async function lookupWord(word: string): Promise<WordData> {
-  const res = await fetch(`/api/word/lookup?word=${encodeURIComponent(word)}`)
+export async function lookupWord(word: string, splitHint = ''): Promise<WordData> {
+  const params = new URLSearchParams({ word })
+  if (splitHint) params.set('splitHint', splitHint)
+  const res = await fetch(`/api/word/lookup?${params.toString()}`)
   if (!res.ok) {
     throw new Error(`查询失败 (${res.status})`)
   }

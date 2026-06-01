@@ -17,6 +17,8 @@ export default function WordResult({ data, onUpdated }: Props) {
   const [updating, setUpdating] = useState(false)
   const [copied, setCopied] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
+  const [hintOpen, setHintOpen] = useState(false)
+  const [splitHint, setSplitHint] = useState('')
 
   useEffect(() => {
     let active = true
@@ -68,8 +70,20 @@ export default function WordResult({ data, onUpdated }: Props) {
     }
   }
 
-  // 更新：1) 删单词查词缓存 2) 删音频（整词 + 整词音标 + 各音节音标块）3) 重新查询刷新
-  async function update() {
+  // 打开更新弹窗，重置上次输入的建议
+  function openHint() {
+    setSplitHint('')
+    setHintOpen(true)
+  }
+
+  // 提交更新：携带拆分建议 splitHint（可为空字符串）
+  async function submitHint() {
+    setHintOpen(false)
+    await update(splitHint.trim())
+  }
+
+  // 更新：1) 删单词查词缓存 2) 删音频（整词 + 整词音标 + 各音节音标块）3) 携带建议重新查询刷新
+  async function update(hint = '') {
     if (updating) return
     setUpdating(true)
     try {
@@ -82,8 +96,8 @@ export default function WordResult({ data, onUpdated }: Props) {
       )
       await Promise.all(audioKeys.map((key) => deleteAudio(key)))
 
-      // 第三步：重新查询单词，回传父组件刷新显示
-      const fresh = await lookupWord(data.word)
+      // 第三步：携带建议重新查询单词，回传父组件刷新显示
+      const fresh = await lookupWord(data.word, hint)
       onUpdated?.(fresh)
     } catch {
       // 更新失败，保持原数据不变
@@ -126,7 +140,7 @@ export default function WordResult({ data, onUpdated }: Props) {
             <StarIcon filled={favorited} />
           </button>
           <button
-            onClick={update}
+            onClick={openHint}
             disabled={updating}
             aria-label="更新"
             title="删除缓存与音频后重新查询"
@@ -222,6 +236,47 @@ export default function WordResult({ data, onUpdated }: Props) {
           </section>
         ))}
       </div>
+
+      {/* 更新弹窗：可选填写拆分建议 splitHint */}
+      {hintOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4 animate-[fadein_0.2s_ease]"
+          onClick={() => setHintOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-lg bg-paper p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-serif text-2xl font-medium text-ink">更新「{data.word}」</h2>
+            <p className="mt-2 font-cn text-sm text-ink-soft">
+              可填写拆分/修改建议，留空则按默认方式重新生成。
+            </p>
+            <textarea
+              value={splitHint}
+              onChange={(e) => setSplitHint(e.target.value)}
+              onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === 'Enter' && submitHint()}
+              autoFocus
+              rows={3}
+              placeholder="例如：拆成 al·go·rithm"
+              className="mt-4 w-full resize-y rounded-md border border-ink/15 bg-paper-deep/40 px-4 py-2.5 font-cn text-base leading-relaxed text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
+            />
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setHintOpen(false)}
+                className="rounded-md px-4 py-2 font-cn text-sm text-ink-soft transition-colors hover:text-ink"
+              >
+                取消
+              </button>
+              <button
+                onClick={submitHint}
+                className="rounded-md bg-accent px-5 py-2 font-cn text-sm text-paper transition-opacity hover:opacity-90"
+              >
+                更新
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   )
 }
