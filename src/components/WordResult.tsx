@@ -122,6 +122,11 @@ export default function WordResult({ data, onUpdated }: Props) {
     setPairs((prev) => [...prev, { text: '', iphonetic: '' }])
   }
 
+  // 批量删除：清空所有单词块/音标块，重置为一行空白
+  function clearPairs() {
+    setPairs([{ text: '', iphonetic: '' }])
+  }
+
   function removePair(idx: number) {
     setPairs((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev))
   }
@@ -410,16 +415,28 @@ export default function WordResult({ data, onUpdated }: Props) {
               ))}
             </div>
 
-            <button
-              type="button"
-              onClick={addPair}
-              className="mt-3 flex items-center gap-1.5 font-cn text-sm text-ink-soft transition-colors hover:text-accent"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              添加一行
-            </button>
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={addPair}
+                className="flex items-center gap-1.5 font-cn text-sm text-ink-soft transition-colors hover:text-accent"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                添加一行
+              </button>
+              <button
+                type="button"
+                onClick={clearPairs}
+                className="flex items-center gap-1.5 font-cn text-sm text-ink-faint transition-colors hover:text-accent"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+                清空
+              </button>
+            </div>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setHintOpen(false)}
