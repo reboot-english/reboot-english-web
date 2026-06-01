@@ -96,6 +96,17 @@ export default function WordResult({ data, onUpdated }: Props) {
     setPairs((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev))
   }
 
+  // 与相邻行交换位置：dir = -1 上移，+1 下移
+  function movePair(idx: number, dir: -1 | 1) {
+    setPairs((prev) => {
+      const target = idx + dir
+      if (target < 0 || target >= prev.length) return prev
+      const next = [...prev]
+      ;[next[idx], next[target]] = [next[target], next[idx]]
+      return next
+    })
+  }
+
   // 提交更新：把非空键值对拼成 JSON 数组字符串作为 splitHint（全空则传空字符串）
   async function submitHint() {
     setHintOpen(false)
@@ -281,7 +292,7 @@ export default function WordResult({ data, onUpdated }: Props) {
               <div className="flex gap-2 px-1 font-cn text-xs text-ink-faint">
                 <span className="flex-1">单词块</span>
                 <span className="flex-1">音标块</span>
-                <span className="w-7" />
+                <span className="w-[5.25rem]" />
               </div>
               {pairs.map((p, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -304,6 +315,28 @@ export default function WordResult({ data, onUpdated }: Props) {
                     spellCheck={false}
                     className="min-w-0 flex-1 rounded-md border border-ink/15 bg-paper-deep/40 px-3 py-2 font-cn text-base text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none"
                   />
+                  <button
+                    type="button"
+                    onClick={() => movePair(i, -1)}
+                    disabled={i === 0}
+                    aria-label="上移该行"
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-ink-faint transition-colors hover:text-accent disabled:opacity-30 disabled:hover:text-ink-faint"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m18 15-6-6-6 6" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => movePair(i, 1)}
+                    disabled={i === pairs.length - 1}
+                    aria-label="下移该行"
+                    className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-ink-faint transition-colors hover:text-accent disabled:opacity-30 disabled:hover:text-ink-faint"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     onClick={() => removePair(i)}
