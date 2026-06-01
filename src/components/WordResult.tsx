@@ -23,6 +23,8 @@ export default function WordResult({ data, onUpdated }: Props) {
   const [updating, setUpdating] = useState(false)
   const [copied, setCopied] = useState(false)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
+  const [refreshingFull, setRefreshingFull] = useState(false)
+  const [refreshingIdx, setRefreshingIdx] = useState<number | null>(null)
   const [hintOpen, setHintOpen] = useState(false)
   // 拆分建议：多组「单词块 text + 音标块 iphonetic」
   const [pairs, setPairs] = useState<SplitPair[]>([{ text: '', iphonetic: '' }])
@@ -63,6 +65,34 @@ export default function WordResult({ data, onUpdated }: Props) {
       setTimeout(() => setCopied(false), 1500)
     } catch {
       // 复制失败，保持原状态
+    }
+  }
+
+  // 更新整词音标发音：删音频缓存后重新播放（重新合成）
+  async function refreshFullAudio() {
+    if (refreshingFull) return
+    setRefreshingFull(true)
+    try {
+      await deleteAudio(data.phonetic)
+      await playAudio(data.phonetic)
+    } catch {
+      // 失败则忽略
+    } finally {
+      setRefreshingFull(false)
+    }
+  }
+
+  // 更新单个音标块发音：删音频缓存后重新播放（重新合成）
+  async function refreshPhonetic(idx: number, ph: string) {
+    if (refreshingIdx !== null) return
+    setRefreshingIdx(idx)
+    try {
+      await deleteAudio(ph)
+      await playAudio(ph)
+    } catch {
+      // 失败则忽略
+    } finally {
+      setRefreshingIdx(null)
     }
   }
 
@@ -198,8 +228,21 @@ export default function WordResult({ data, onUpdated }: Props) {
         </div>
       </header>
 
-      {/* full phonetic */}
-      <p className="mt-5 font-cn text-2xl tracking-wide text-ink-soft">{data.phonetic}</p>
+      {/* full phonetic — hover 浮现刷新发音按钮 */}
+      <div className="group mt-5 inline-flex items-center gap-2">
+        <p className="font-cn text-2xl tracking-wide text-ink-soft">{data.phonetic}</p>
+        <button
+          onClick={refreshFullAudio}
+          disabled={refreshingFull}
+          aria-label="更新发音"
+          title="删除音频后重新合成发音"
+          className={`rounded-full p-1 text-ink-faint transition-opacity hover:text-accent ${
+            refreshingFull ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          <RefreshIcon spinning={refreshingFull} size={16} />
+        </button>
+      </div>
 
       {/* per-syllable cards: tapping a card plays that syllable's phonetic */}
       {data.phonetics.length > 0 && (
@@ -226,6 +269,21 @@ export default function WordResult({ data, onUpdated }: Props) {
                     </div>
                   )}
                 </button>
+                {ph && (
+                  <button
+                    onClick={() => refreshPhonetic(i, ph)}
+                    disabled={refreshingIdx !== null}
+                    aria-label={`更新发音 ${ph}`}
+                    title="删除音频后重新合成发音"
+                    className={`absolute left-1.5 top-1.5 rounded-full p-1 transition-opacity ${
+                      refreshingIdx === i
+                        ? 'text-accent opacity-100'
+                        : 'text-ink-faint opacity-0 hover:text-accent group-hover:opacity-100'
+                    }`}
+                  >
+                    <RefreshIcon spinning={refreshingIdx === i} size={14} />
+                  </button>
+                )}
                 {ph && (
                   <button
                     onClick={() => copyPhonetic(i, ph)}
@@ -401,9 +459,9 @@ function StarIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function RefreshIcon({ spinning }: { spinning: boolean }) {
+function RefreshIcon({ spinning, size = 22 }: { spinning: boolean; size?: number }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={spinning ? 'animate-spin' : ''}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={spinning ? 'animate-spin' : ''}>
       <path d="M21 12a9 9 0 1 1-2.64-6.36" />
       <path d="M21 3v6h-6" />
     </svg>
