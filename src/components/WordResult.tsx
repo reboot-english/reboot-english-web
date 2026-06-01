@@ -15,6 +15,7 @@ export default function WordResult({ data, onUpdated }: Props) {
   const [favorited, setFavorited] = useState(false)
   const [favLoading, setFavLoading] = useState(false)
   const [updating, setUpdating] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -41,6 +42,17 @@ export default function WordResult({ data, onUpdated }: Props) {
       setFavorited(!next) // revert on failure
     } finally {
       setFavLoading(false)
+    }
+  }
+
+  // 复制单词到剪贴板
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(data.word)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // 复制失败，保持原状态
     }
   }
 
@@ -109,6 +121,18 @@ export default function WordResult({ data, onUpdated }: Props) {
             className="rounded-full border border-ink/15 p-3 text-ink-soft transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
           >
             <RefreshIcon spinning={updating} />
+          </button>
+          <button
+            onClick={copy}
+            aria-label="复制单词"
+            title={copied ? '已复制' : '复制单词'}
+            className={`rounded-full border p-3 transition-colors ${
+              copied
+                ? 'border-accent text-accent'
+                : 'border-ink/15 text-ink-soft hover:border-accent hover:text-accent'
+            }`}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
           </button>
         </div>
       </header>
@@ -195,6 +219,23 @@ function RefreshIcon({ spinning }: { spinning: boolean }) {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={spinning ? 'animate-spin' : ''}>
       <path d="M21 12a9 9 0 1 1-2.64-6.36" />
       <path d="M21 3v6h-6" />
+    </svg>
+  )
+}
+
+function CopyIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+function CheckIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
     </svg>
   )
 }
