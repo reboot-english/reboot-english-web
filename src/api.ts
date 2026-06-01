@@ -88,6 +88,19 @@ export function listAllWords(): Promise<string[]> {
   return getWordList('/api/word/list')
 }
 
+export async function suggestWords(prefix: string, limit = 10): Promise<string[]> {
+  const params = new URLSearchParams({ prefix, limit: String(limit) })
+  const res = await fetch(`/api/word/suggest?${params.toString()}`)
+  if (!res.ok) {
+    throw new Error(`查询失败 (${res.status})`)
+  }
+  const json: FavoriteEnvelope<string[]> = await res.json()
+  if (json.code !== 200) {
+    throw new Error(json.message || '查询失败')
+  }
+  return json.data ?? []
+}
+
 export function listAudio(): Promise<string[]> {
   return getWordList('/api/word/listAudio')
 }
