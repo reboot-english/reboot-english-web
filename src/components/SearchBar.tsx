@@ -19,6 +19,8 @@ export default function SearchBar({ initial = '', onSearch, loading, autoFocus }
   const lastFired = useRef('') // 上次已查询的词；输入等于它时不再弹出下拉
 
   useEffect(() => {
+    // 外部设置查询词（如点击示例词）时同步输入框，并视为"已查询"，避免随后弹出下拉
+    lastFired.current = initial.trim()
     setValue(initial)
   }, [initial])
 
